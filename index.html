@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cloudx247 — Monitoring as a Service</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
+:root {
+  --bg0:       #030a05;
+  --bg1:       #050e07;
+  --bg2:       #081208;
+  --bg3:       #0b1a0c;
+  --glass:     rgba(8,18,8,0.75);
+  --glass2:    rgba(11,26,11,0.6);
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(52,168,83,0.2);
+  --border3:   rgba(52,168,83,0.45);
+
+  --green:     #3da85a;
+  --green2:    #1e6b35;
+  --sage:      #6dbf82;
+  --emerald:   #2eb86a;
+  --mint:      #5af5a0;
+  --white:     #f0f7f2;
+  --muted:     #7a9b82;
+  --muted2:    #4a6650;
+
+  --mono:      'DM Mono', monospace;
+  --sans:      'Outfit', sans-serif;
+
+  --r-sm:  8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+}
+
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--bg0);
+  color:var(--white);
+  overflow-x:hidden;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* animated starfield bg */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 120% 60% at 10% 0%,   rgba(52,168,83,0.08) 0%,transparent 55%),
+    radial-gradient(ellipse 80%  50% at 90% 100%,  rgba(34,139,70,0.07) 0%,transparent 55%),
+    radial-gradient(ellipse 60%  40% at 50% 50%,   rgba(5,12,8,0.95)  0%,transparent 100%);
+  pointer-events:none;z-index:0;
+}
+/* grid texture */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(52,168,83,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(52,168,83,0.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+/* ═══════════════════════════════════════
+   PAGE WRAPPER / ROUTER
+═══════════════════════════════════════ */
+.page{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column}
+.page.active{display:flex}
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+nav{
+  position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 5%;height:68px;
+  background:rgba(3,10,5,0.90);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--sans);font-weight:700;font-size:1.15rem;
+  color:var(--white);text-decoration:none;cursor:pointer;
+}
+.nav-logo-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:0.95rem;color:#03070f;
+  box-shadow:0 0 18px rgba(52,168,83,0.3);
+  flex-shrink:0;
+}
+.nav-links{display:flex;align-items:center;gap:6px;list-style:none}
+.nav-links a{
+  color:var(--muted);text-decoration:none;
+  font-size:0.88rem;font-weight:400;
+  padding:6px 14px;border-radius:var(--r-sm);
+  transition:color .2s,background .2s;cursor:pointer;
+}
+.nav-links a:hover,.nav-links a.active-link{color:var(--white);background:rgba(255,255,255,0.06)}
+.nav-cta{
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  border:none;color:#03070f;
+  padding:9px 22px;border-radius:var(--r-sm);
+  font-family:var(--sans);font-weight:600;font-size:0.85rem;
+  cursor:pointer;transition:opacity .2s,transform .2s;
+  box-shadow:0 0 20px rgba(52,168,83,0.25);
+}
+.nav-cta:hover{opacity:.88;transform:translateY(-1px)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--muted);border-radius:2px;transition:.3s}
+.mobile-menu{
+  display:none;position:fixed;top:68px;left:0;right:0;z-index:190;
+  background:rgba(3,10,5,0.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  flex-direction:column;padding:16px 5% 24px;gap:4px;
+}
+.mobile-menu.open{display:flex}
+.mobile-menu a{
+  color:var(--muted);text-decoration:none;
+  font-size:1rem;font-weight:400;padding:12px 16px;
+  border-radius:var(--r-sm);cursor:pointer;transition:color .2s,background .2s;
+}
+.mobile-menu a:hover{color:var(--white);background:rgba(255,255,255,0.06)}
+.mobile-menu .mob-cta{
+  margin-top:8px;text-align:center;
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  color:#03070f;font-weight:600;border-radius:var(--r-sm);
+}
+
+/* ═══════════════════════════════════════
+   SHARED LAYOUT
+═══════════════════════════════════════ */
+.container{width:100%;max-width:1080px;margin:0 auto;padding:0 5%}
+section{padding:96px 0}
+
+.section-tag{
+  display:inline-block;
+  font-family:var(--mono);font-size:0.75rem;font-weight:400;
+  color:var(--sage);letter-spacing:0.05em;
+  margin-bottom:20px;
+}
+.section-tag::before{content:'// '}
+
+h1.hero-title{
+  font-weight:900;
+  font-size:clamp(2.6rem,6vw,5rem);
+  line-height:1.06;letter-spacing:-0.03em;
+  margin-bottom:24px;
+}
+h1.hero-title .grad{
+  background:linear-gradient(95deg,var(--green) 0%,var(--emerald) 55%,var(--mint) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section-title{
+  font-weight:800;font-size:clamp(1.8rem,3.5vw,2.6rem);
+  line-height:1.15;letter-spacing:-0.025em;
+  margin-bottom:16px;
+}
+.section-sub{
+  font-size:1.05rem;color:var(--muted);
+  line-height:1.75;max-width:560px;
+}
+
+/* ── Buttons ── */
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  border:none;color:#03070f;
+  padding:14px 30px;border-radius:var(--r-md);
+  font-family:var(--sans);font-weight:600;font-size:0.95rem;
+  cursor:pointer;transition:all .25s;
+  box-shadow:0 0 28px rgba(52,168,83,0.2);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 44px rgba(52,168,83,0.35)}
+.btn-outline{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;
+  border:1px solid var(--border2);
+  color:var(--white);
+  padding:13px 30px;border-radius:var(--r-md);
+  font-family:var(--sans);font-weight:500;font-size:0.95rem;
+  cursor:pointer;transition:all .25s;
+}
+.btn-outline:hover{border-color:var(--border3);background:rgba(52,168,83,0.06);transform:translateY(-2px)}
+.btn-ghost{
+  background:transparent;border:none;
+  color:var(--sage);font-family:var(--sans);font-size:0.9rem;font-weight:500;
+  cursor:pointer;transition:color .2s;padding:0;
+  text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(52,168,83,0.4);
+}
+.btn-ghost:hover{color:var(--emerald)}
+
+/* ── Cards ── */
+.card{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:28px;
+  backdrop-filter:blur(16px);
+  transition:border-color .3s,transform .3s,box-shadow .3s;
+}
+.card:hover{
+  border-color:var(--border2);
+  transform:translateY(-4px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.35),0 0 0 1px rgba(52,168,83,0.1);
+}
+
+/* ── Divider ── */
+.divider{
+  width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+  margin:0;
+}
+
+/* ── Reveal animation ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* ═══════════════════════════════════════
+   HOME PAGE
+═══════════════════════════════════════ */
+
+/* Hero */
+.hero{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:120px 5% 100px;
+  position:relative;z-index:1;
+}
+.hero-eyebrow{
+  font-family:var(--mono);font-size:0.78rem;color:var(--sage);
+  letter-spacing:0.06em;margin-bottom:28px;
+  animation:fadeUp .6s ease both;
+}
+.hero-eyebrow::before{content:'// '}
+.hero h1{animation:fadeUp .7s .1s ease both}
+.hero-sub{
+  font-size:1.1rem;color:var(--muted);line-height:1.8;
+  max-width:580px;margin-bottom:44px;
+  animation:fadeUp .7s .2s ease both;
+}
+.hero-actions{
+  display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+  animation:fadeUp .7s .3s ease both;
+}
+
+/* accent ring behind hero text */
+.hero-ring{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-58%);
+  width:700px;height:700px;
+  border-radius:50%;
+  border:1px solid rgba(52,168,83,0.06);
+  pointer-events:none;
+}
+.hero-ring::before{
+  content:'';position:absolute;inset:60px;
+  border-radius:50%;
+  border:1px solid rgba(52,168,83,0.05);
+}
+
+/* How it Works */
+.steps-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+  margin-top:56px;
+}
+.step-card{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:32px 28px 28px;
+  transition:border-color .3s,transform .3s,box-shadow .3s;
+  position:relative;overflow:hidden;
+}
+.step-card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--green),var(--emerald));
+  opacity:0;transition:opacity .3s;
+}
+.step-card:hover{
+  border-color:var(--border2);
+  transform:translateY(-4px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.35);
+}
+.step-card:hover::before{opacity:1}
+.step-num{
+  font-family:var(--mono);font-size:0.75rem;font-weight:500;
+  color:var(--sage);letter-spacing:.08em;
+  margin-bottom:16px;display:block;
+}
+.step-title{font-weight:700;font-size:1.05rem;margin-bottom:10px}
+.step-desc{font-size:0.88rem;color:var(--muted);line-height:1.7}
+
+/* Why section */
+.why-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+  margin-top:48px;
+}
+.why-card{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:28px;
+  display:flex;flex-direction:column;gap:8px;
+  transition:border-color .3s,transform .3s;
+}
+.why-card:hover{border-color:var(--border2);transform:translateY(-3px)}
+.why-icon{
+  width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.15rem;margin-bottom:4px;
+  background:rgba(52,168,83,0.1);border:1px solid rgba(52,168,83,0.15);
+}
+.why-title{font-weight:700;font-size:1rem}
+.why-desc{font-size:0.86rem;color:var(--muted);line-height:1.65}
+
+/* Tool logos */
+.tools-strip{
+  margin-top:64px;text-align:center;
+}
+.tools-label{
+  font-size:0.78rem;font-family:var(--mono);color:var(--muted2);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px;
+}
+.tools-row{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+}
+.tool-badge{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:8px 18px;
+  font-size:0.85rem;font-weight:500;color:var(--muted);
+  transition:border-color .25s,color .25s;cursor:default;
+}
+.tool-badge:hover{border-color:var(--border2);color:var(--white)}
+
+/* Stats */
+.stats-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;
+  margin-top:80px;
+}
+.stat-cell{
+  background:var(--bg1);
+  padding:40px 32px;text-align:center;
+}
+.stat-val{
+  font-family:var(--sans);font-weight:800;font-size:2.4rem;
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;margin-bottom:8px;
+}
+.stat-lbl{font-size:0.82rem;color:var(--muted);letter-spacing:.02em}
+
+/* CTA band */
+.cta-band{
+  margin:0 5%;
+  background:var(--glass);
+  border:1px solid var(--border2);
+  border-radius:var(--r-xl);
+  padding:60px 48px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+.cta-band::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(52,168,83,0.07),transparent 70%);
+  pointer-events:none;
+}
+.cta-band h2{font-weight:800;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.025em;margin-bottom:12px}
+.cta-band p{color:var(--muted);font-size:1rem;margin-bottom:32px}
+
+/* ═══════════════════════════════════════
+   SERVICES PAGE
+═══════════════════════════════════════ */
+.services-hero{padding:80px 5% 60px;text-align:center}
+.two-col{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+  margin-top:48px;
+}
+.col-header{
+  font-family:var(--mono);font-size:0.75rem;color:var(--sage);
+  letter-spacing:.06em;margin-bottom:20px;
+  padding-bottom:12px;border-bottom:1px solid var(--border2);
+}
+.col-header::before{content:'// '}
+.service-item{
+  display:flex;flex-direction:column;gap:6px;
+  padding:20px 0;border-bottom:1px solid var(--border);
+}
+.service-item:last-child{border-bottom:none}
+.service-item-title{font-weight:600;font-size:0.95rem}
+.service-item-desc{font-size:0.85rem;color:var(--muted);line-height:1.65}
+
+/* Feature table */
+.feat-table{
+  width:100%;border-collapse:collapse;
+  border:1px solid var(--border);border-radius:var(--r-lg);
+  overflow:hidden;margin-top:48px;
+}
+.feat-table th{
+  background:var(--bg2);
+  font-family:var(--mono);font-size:0.75rem;font-weight:500;
+  color:var(--muted2);letter-spacing:.06em;text-transform:uppercase;
+  padding:14px 24px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.feat-table td{
+  padding:16px 24px;font-size:0.88rem;
+  border-bottom:1px solid var(--border);
+}
+.feat-table tr:last-child td{border-bottom:none}
+.feat-table tr:nth-child(even) td{background:rgba(255,255,255,0.02)}
+.feat-table td:first-child{color:var(--muted);width:40%}
+.feat-table td:last-child{color:var(--white);font-weight:500}
+.feat-check{color:var(--mint);font-weight:600}
+
+/* Services CTA */
+.svc-cta{padding:80px 5%;text-align:center}
+
+/* ═══════════════════════════════════════
+   PRICING PAGE
+═══════════════════════════════════════ */
+.pricing-hero{padding:80px 5% 60px;text-align:center}
+.pricing-wrap{
+  padding:0 5% 100px;
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+}
+.pricing-card{
+  width:100%;max-width:560px;
+  background:var(--glass);
+  border:1px solid var(--border2);
+  border-radius:var(--r-xl);
+  padding:44px 40px;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 60px rgba(52,168,83,0.1);
+}
+.pricing-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--green),var(--emerald),var(--mint));
+}
+.pricing-card::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(52,168,83,0.06),transparent 70%);
+  pointer-events:none;
+}
+.plan-label{
+  font-family:var(--mono);font-size:0.72rem;color:var(--sage);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;
+}
+.plan-name{font-weight:800;font-size:1.35rem;margin-bottom:6px}
+.plan-tagline{font-size:0.9rem;color:var(--muted);margin-bottom:32px}
+.plan-price{
+  display:flex;align-items:baseline;gap:6px;margin-bottom:6px;
+}
+.plan-amount{
+  font-weight:900;font-size:3.5rem;line-height:1;
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.plan-currency{font-size:1.5rem;color:var(--muted);font-weight:600;align-self:flex-start;margin-top:8px}
+.plan-cycle{font-size:0.88rem;color:var(--muted);margin-bottom:32px}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:36px}
+.plan-features li{
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:0.9rem;color:var(--muted);
+}
+.plan-features li::before{
+  content:'✓';color:var(--mint);font-weight:700;flex-shrink:0;margin-top:1px;
+}
+.pricing-custom{
+  width:100%;max-width:560px;
+  text-align:center;
+  background:var(--glass2);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:28px 32px;
+}
+.pricing-custom p{color:var(--muted);font-size:0.92rem;margin-bottom:12px}
+
+/* ═══════════════════════════════════════
+   ABOUT PAGE
+═══════════════════════════════════════ */
+.about-hero{padding:80px 5% 60px;text-align:center}
+.about-grid{
+  padding:0 5% 100px;
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+}
+.about-card{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:36px 32px;
+  transition:border-color .3s,transform .3s;
+}
+.about-card:hover{border-color:var(--border2);transform:translateY(-4px)}
+.about-card h3{
+  font-weight:700;font-size:1.1rem;margin-bottom:16px;
+  display:flex;align-items:center;gap:10px;
+}
+.about-card h3 .pill{
+  font-family:var(--mono);font-size:0.65rem;
+  color:var(--sage);background:rgba(52,168,83,0.1);
+  border:1px solid rgba(52,168,83,0.2);
+  border-radius:4px;padding:2px 8px;letter-spacing:.04em;
+}
+.about-card p{font-size:0.9rem;color:var(--muted);line-height:1.75}
+.about-cta{
+  padding:0 5% 100px;text-align:center;
+}
+.about-cta-box{
+  max-width:620px;margin:0 auto;
+  background:var(--glass);border:1px solid var(--border2);
+  border-radius:var(--r-xl);padding:56px 40px;
+  position:relative;overflow:hidden;
+}
+.about-cta-box::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(52,168,83,0.06),transparent 70%);
+  pointer-events:none;
+}
+.about-cta-box h2{font-weight:800;font-size:clamp(1.4rem,3vw,1.9rem);letter-spacing:-.02em;margin-bottom:12px}
+.about-cta-box p{color:var(--muted);font-size:0.95rem;margin-bottom:28px;line-height:1.7}
+
+/* ═══════════════════════════════════════
+   GET STARTED PAGE
+═══════════════════════════════════════ */
+.gs-hero{padding:80px 5% 48px;text-align:center}
+.gs-form-wrap{padding:0 5% 100px;display:flex;justify-content:center}
+.gs-form{
+  width:100%;max-width:660px;
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:var(--r-xl);padding:44px 40px;
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.form-field{display:flex;flex-direction:column;gap:8px}
+.form-field.full{grid-column:1/-1}
+label{font-size:0.82rem;font-weight:500;color:var(--muted);letter-spacing:.02em}
+label .req{color:var(--green)}
+input,textarea,select{
+  background:rgba(6,12,24,0.8);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:12px 16px;
+  color:var(--white);
+  font-family:var(--sans);font-size:0.9rem;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  width:100%;
+}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--border3);
+  box-shadow:0 0 0 3px rgba(52,168,83,0.1);
+}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5f7a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+  padding-right:36px;cursor:pointer;
+}
+select option{background:#080d18;color:var(--white)}
+textarea{resize:vertical;min-height:100px}
+.checkboxes{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.checkbox-opt{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(6,12,24,0.8);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:10px 16px;cursor:pointer;transition:border-color .2s;
+  font-size:0.88rem;color:var(--muted);
+  user-select:none;
+}
+.checkbox-opt:has(input:checked){border-color:var(--border2);color:var(--white)}
+.checkbox-opt input{width:auto;display:none}
+.checkbox-dot{
+  width:16px;height:16px;border-radius:4px;
+  border:1px solid var(--border);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+.checkbox-opt:has(input:checked) .checkbox-dot{
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  border-color:transparent;
+}
+.checkbox-dot::after{content:'✓';font-size:10px;color:#03070f;opacity:0;transition:opacity .2s}
+.checkbox-opt:has(input:checked) .checkbox-dot::after{opacity:1}
+.form-submit{margin-top:8px}
+.btn-submit{
+  width:100%;padding:15px;border-radius:var(--r-md);
+  background:linear-gradient(135deg,var(--green),var(--emerald));
+  border:none;color:#03070f;
+  font-family:var(--sans);font-weight:700;font-size:1rem;
+  cursor:pointer;transition:all .25s;
+  box-shadow:0 0 28px rgba(52,168,83,0.2);
+}
+.btn-submit:hover{opacity:.88;transform:translateY(-2px);box-shadow:0 0 44px rgba(52,168,83,0.35)}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  padding:56px 5% 32px;
+}
+.footer-top{
+  display:grid;grid-template-columns:1fr auto auto;gap:48px;
+  margin-bottom:48px;
+}
+.footer-brand p{
+  font-size:0.85rem;color:var(--muted);line-height:1.7;
+  max-width:300px;margin-top:12px;
+}
+.footer-col h4{
+  font-size:0.78rem;font-weight:600;color:var(--muted2);
+  letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:16px;font-family:var(--mono);
+}
+.footer-col a{
+  display:block;color:var(--muted);text-decoration:none;
+  font-size:0.88rem;margin-bottom:10px;cursor:pointer;
+  transition:color .2s;
+}
+.footer-col a:hover{color:var(--white)}
+.footer-bottom{
+  border-top:1px solid var(--border);
+  padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-bottom p{font-size:0.8rem;color:var(--muted2)}
+.footer-contact a{
+  font-size:0.85rem;color:var(--sage);text-decoration:none;
+  font-family:var(--mono);transition:color .2s;
+}
+.footer-contact a:hover{color:var(--emerald)}
+
+/* ═══════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes pulse{
+  0%,100%{opacity:1}50%{opacity:.5}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:900px){
+  .steps-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .about-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr 1fr}
+}
+@media(max-width:680px){
+  .nav-links,.nav-cta{display:none}
+  .hamburger{display:flex}
+  .hero{padding:100px 5% 80px}
+  .why-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr}
+  .stats-row .stat-cell{border-bottom:1px solid var(--border)}
+  .gs-form{padding:32px 24px}
+  .form-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr}
+  .pricing-card{padding:32px 24px}
+  section{padding:72px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav id="main-nav">
+  <div class="nav-logo" onclick="showPage('home')">
+    <div class="nav-logo-mark">C</div>
+    Cloudx247
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')"    data-page="home">Home</a></li>
+    <li><a onclick="showPage('services')" data-page="services">Services</a></li>
+    <li><a onclick="showPage('pricing')"  data-page="pricing">Pricing</a></li>
+    <li><a onclick="showPage('about')"    data-page="about">About</a></li>
+    <button class="nav-cta" onclick="showPage('getstarted')">Get Started</button>
+  </ul>
+  <div class="hamburger" id="ham" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu" id="mob-menu">
+  <a onclick="showPage('home');toggleMenu()">Home</a>
+  <a onclick="showPage('services');toggleMenu()">Services</a>
+  <a onclick="showPage('pricing');toggleMenu()">Pricing</a>
+  <a onclick="showPage('about');toggleMenu()">About</a>
+  <a class="mob-cta" onclick="showPage('getstarted');toggleMenu()">Get Started</a>
+</div>
+
+<!-- ══════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-ring"></div>
+    <p class="hero-eyebrow">monitoring-as-a-service</p>
+    <h1 class="hero-title">Your Systems.<br/><span class="grad">Always Monitored.</span></h1>
+    <p class="hero-sub">We set up professional monitoring for your websites, APIs, and endpoints. 24/7 uptime visibility — delivered in 48 hours. No contracts, no subscriptions.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('getstarted')">Get Started</button>
+      <button class="btn-outline" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">How It Works</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- How It Works -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="reveal">
+        <p class="section-tag">how it works</p>
+        <h2 class="section-title">Three steps. That's it.</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <span class="step-num">01</span>
+          <div class="step-title">Tell us what to monitor</div>
+          <div class="step-desc">Share your URLs, endpoints, notification emails, and monitoring preferences.</div>
+        </div>
+        <div class="step-card reveal">
+          <span class="step-num">02</span>
+          <div class="step-title">We set it up</div>
+          <div class="step-desc">We choose the best tool for your needs and configure everything end-to-end.</div>
+        </div>
+        <div class="step-card reveal">
+          <span class="step-num">03</span>
+          <div class="step-title">You get notified instantly</div>
+          <div class="step-desc">When something goes down, you know immediately. Full ownership is yours.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Why Cloudx247 -->
+  <section>
+    <div class="container">
+      <div class="reveal">
+        <p class="section-tag">why cloudx247</p>
+        <h2 class="section-title">Built for speed and simplicity.</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-card reveal">
+          <div class="why-icon">⚡</div>
+          <div class="why-title">Speed</div>
+          <div class="why-desc">Monitoring live in 48 hours or less.</div>
+        </div>
+        <div class="why-card reveal">
+          <div class="why-icon">🎯</div>
+          <div class="why-title">Simplicity</div>
+          <div class="why-desc">No config headaches. We handle everything.</div>
+        </div>
+        <div class="why-card reveal">
+          <div class="why-icon">💳</div>
+          <div class="why-title">Affordability</div>
+          <div class="why-desc">One-time payment. No recurring fees.</div>
+        </div>
+        <div class="why-card reveal">
+          <div class="why-icon">🔓</div>
+          <div class="why-title">No Lock-in</div>
+          <div class="why-desc">We deliver, you own it. Walk away anytime.</div>
+        </div>
+      </div>
+
+      <!-- Tool logos -->
+      <div class="tools-strip reveal">
+        <p class="tools-label">Tool-agnostic — we pick the best fit for you</p>
+        <div class="tools-row">
+          <div class="tool-badge">Pingdom</div>
+          <div class="tool-badge">Datadog</div>
+          <div class="tool-badge">UptimeRobot</div>
+          <div class="tool-badge">Better Stack</div>
+          <div class="tool-badge">Checkly</div>
+          <div class="tool-badge">Grafana</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row reveal">
+        <div class="stat-cell">
+          <div class="stat-val">99.9%</div>
+          <div class="stat-lbl">Avg. client uptime visibility</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val">500+</div>
+          <div class="stat-lbl">Endpoints monitored</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val">&lt;48h</div>
+          <div class="stat-lbl">Average setup time</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CTA Band -->
+  <section style="padding:80px 0">
+    <div class="cta-band reveal">
+      <h2>Get monitoring set up in 48 hours</h2>
+      <p>Tell us what you need. We'll handle the rest.</p>
+      <button class="btn-primary" onclick="showPage('getstarted')">Start Now</button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div class="divider"></div>
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="nav-logo" style="margin-bottom:0;cursor:default">
+            <div class="nav-logo-mark">C</div>
+            Cloudx247
+          </div>
+          <p>Professional monitoring setup for startups and SMBs. One-time payment, no contracts.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Pages</h4>
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('services')">Services</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+          <a onclick="showPage('about')">About</a>
+          <a onclick="showPage('getstarted')">Get Started</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@cloudx247.com">hello@cloudx247.com</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Cloudx247. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     SERVICES PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-services">
+
+  <div class="services-hero">
+    <p class="section-tag">services</p>
+    <h1 class="hero-title" style="font-size:clamp(2rem,5vw,3.8rem)">How Cloudx247 Works</h1>
+    <p class="section-sub" style="margin:0 auto">No contracts. No subscriptions. We implement, deliver, and hand over — you own the monitoring forever.</p>
+  </div>
+
+  <section>
+    <div class="container">
+      <div class="two-col reveal">
+        <!-- What you provide -->
+        <div class="card">
+          <p class="col-header">what you provide</p>
+          <h3 style="font-weight:700;font-size:1.05rem;color:var(--muted);margin-bottom:20px">Tell us what matters to you.</h3>
+          <div class="service-item">
+            <div class="service-item-title">URLs &amp; Endpoints</div>
+            <div class="service-item-desc">Public-facing URLs, APIs, or services you need monitored.</div>
+          </div>
+          <div class="service-item">
+            <div class="service-item-title">Notification Contacts</div>
+            <div class="service-item-desc">Email addresses of people who should be alerted on incidents.</div>
+          </div>
+          <div class="service-item">
+            <div class="service-item-title">Response Thresholds</div>
+            <div class="service-item-desc">Immediate alerts or a 5-minute delay — your choice.</div>
+          </div>
+          <div class="service-item">
+            <div class="service-item-title">Check Frequency</div>
+            <div class="service-item-desc">How often we check: every 5, 10, or 15 minutes.</div>
+          </div>
+          <div class="service-item">
+            <div class="service-item-title">Preferred Regions</div>
+            <div class="service-item-desc">Choose where checks run from: EU, US, APAC, or all.</div>
+          </div>
+        </div>
+        <!-- What we deliver -->
+        <div class="card">
+          <p class="col-header">what we deliver</p>
+          <h3 style="font-weight:700;font-size:1.05rem;color:var(--muted);margin-bottom:20px">A fully configured monitoring stack.</h3>
+          <div class="service-item">
+            <div class="service-item-title">Configured Monitoring</div>
+            <div class="service-item-desc">We select and set up the right tool based on your needs and budget.</div>
+          </div>
+          <div class="service-item">
+            <div class="service-item-title">Alert Routing</div>
+            <div class="service-item-desc">Email notifications configured and tested for your team.</div>
+          </div>
+          <div class="service-item">
+            <div class="service-item-title">Full Handoff</div>
+            <div class="service-item-desc">Documentation, credentials, and access — it's all yours to keep.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature table -->
+      <div class="reveal" style="margin-top:64px">
+        <p class="section-tag">feature overview</p>
+        <h2 class="section-title">What's included in every setup.</h2>
+        <table class="feat-table">
+          <thead>
+            <tr><th>Feature</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Monitoring Frequency</td><td>5 / 10 / 15 min intervals</td></tr>
+            <tr><td>Check Regions</td><td>EU, US, APAC — or all</td></tr>
+            <tr><td>Alert Types</td><td>Email notifications</td></tr>
+            <tr><td>Response Thresholds</td><td>Immediate or 5-min delay</td></tr>
+            <tr><td>Tool Selection</td><td>Best-fit for your budget</td></tr>
+            <tr><td>Setup Time</td><td>Under 48 hours</td></tr>
+            <tr><td>Ownership</td><td><span class="feat-check">100% yours after delivery</span></td></tr>
+            <tr><td>Contracts</td><td><span class="feat-check">None — one-time payment</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="svc-cta reveal">
+    <p style="color:var(--muted);font-size:1rem;margin-bottom:20px">Ready to get started?<br/><span style="font-size:0.9rem">Fill out our intake form and we'll have your monitoring live in 48 hours.</span></p>
+    <button class="btn-primary" onclick="showPage('getstarted')">Get Started</button>
+  </div>
+
+  <div class="divider"></div>
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="nav-logo" style="margin-bottom:0;cursor:default">
+            <div class="nav-logo-mark">C</div>Cloudx247
+          </div>
+          <p>Professional monitoring setup for startups and SMBs. One-time payment, no contracts.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Pages</h4>
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('services')">Services</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+          <a onclick="showPage('about')">About</a>
+          <a onclick="showPage('getstarted')">Get Started</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@cloudx247.com">hello@cloudx247.com</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Cloudx247. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     PRICING PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-pricing">
+
+  <div class="pricing-hero">
+    <p class="section-tag">pricing</p>
+    <h1 class="hero-title" style="font-size:clamp(2rem,5vw,3.8rem)">Simple, Transparent Pricing</h1>
+    <p class="section-sub" style="margin:0 auto">One package. One payment. Everything you need to get professional monitoring running.</p>
+  </div>
+
+  <div class="pricing-wrap">
+    <div class="pricing-card reveal">
+      <div class="plan-label">Complete Package</div>
+      <div class="plan-name">Monitoring Setup</div>
+      <div class="plan-tagline">Everything configured and delivered — you own it forever.</div>
+      <div class="plan-price">
+        <span class="plan-currency">$</span>
+        <span class="plan-amount">499</span>
+      </div>
+      <div class="plan-cycle">one-time</div>
+      <ul class="plan-features">
+        <li>Up to 20 endpoints monitored</li>
+        <li>5 / 10 / 15 min check intervals</li>
+        <li>Multi-region checks (EU, US, APAC)</li>
+        <li>Email alert notifications</li>
+        <li>Immediate or delayed thresholds</li>
+        <li>Best-fit tool selection &amp; setup</li>
+        <li>Full documentation &amp; handoff</li>
+        <li>Delivered in under 48 hours</li>
+        <li>100% ownership after delivery</li>
+        <li>No contracts, no subscriptions</li>
+      </ul>
+      <button class="btn-primary" style="width:100%;justify-content:center" onclick="showPage('getstarted')">Get Started</button>
+    </div>
+
+    <div class="pricing-custom reveal">
+      <p>Need more than 20 endpoints or custom requirements?</p>
+      <button class="btn-ghost" onclick="showPage('getstarted')">Get a Custom Quote →</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="nav-logo" style="margin-bottom:0;cursor:default">
+            <div class="nav-logo-mark">C</div>Cloudx247
+          </div>
+          <p>Professional monitoring setup for startups and SMBs. One-time payment, no contracts.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Pages</h4>
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('services')">Services</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+          <a onclick="showPage('about')">About</a>
+          <a onclick="showPage('getstarted')">Get Started</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@cloudx247.com">hello@cloudx247.com</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Cloudx247. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     ABOUT PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-about">
+
+  <div class="about-hero">
+    <p class="section-tag">about</p>
+    <h1 class="hero-title" style="font-size:clamp(2rem,5vw,3.8rem)">Monitoring Shouldn't Be Hard</h1>
+    <p class="section-sub" style="margin:0 auto">Cloudx247 exists because every business deserves to know when their systems go down — without hiring a DevOps team.</p>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-card reveal">
+      <h3>Our Philosophy <span class="pill">01</span></h3>
+      <p>Most startups and SMBs know monitoring is important, but implementing it properly takes time, expertise, and ongoing costs they can't justify. We bridge that gap. We're not a managed service — we're a setup service. We implement, deliver, and get out of your way.</p>
+    </div>
+    <div class="about-card reveal">
+      <h3>Why Monitoring Matters <span class="pill">02</span></h3>
+      <p>Downtime costs money and trust. A 10-minute outage can mean lost revenue, frustrated users, and damaged reputation. Yet many businesses find out about outages from their customers — not their tools. We make sure you're always the first to know.</p>
+    </div>
+    <div class="about-card reveal" style="grid-column:1/-1">
+      <h3>Our Promise <span class="pill">03</span></h3>
+      <p>No lock-in, no upsells, no recurring charges. We pick the best monitoring tool for your needs, configure it end-to-end, and hand everything over. The credentials, the dashboards, the alerts — it's all yours. If you ever need changes, come back. But you don't have to.</p>
+    </div>
+  </div>
+
+  <div class="about-cta reveal">
+    <div class="about-cta-box">
+      <h2>Let's get your monitoring sorted.</h2>
+      <p>It takes 48 hours and one conversation.</p>
+      <button class="btn-primary" onclick="showPage('getstarted')">Get Started</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="nav-logo" style="margin-bottom:0;cursor:default">
+            <div class="nav-logo-mark">C</div>Cloudx247
+          </div>
+          <p>Professional monitoring setup for startups and SMBs. One-time payment, no contracts.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Pages</h4>
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('services')">Services</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+          <a onclick="showPage('about')">About</a>
+          <a onclick="showPage('getstarted')">Get Started</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@cloudx247.com">hello@cloudx247.com</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Cloudx247. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     GET STARTED PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-getstarted">
+
+  <div class="gs-hero">
+    <p class="section-tag">get-started</p>
+    <h1 class="hero-title" style="font-size:clamp(2rem,5vw,3.6rem)">Let's Set Up Your Monitoring</h1>
+    <p class="section-sub" style="margin:0 auto">Fill in the details below and we'll get back to you within 24 hours with a plan.</p>
+  </div>
+
+  <div class="gs-form-wrap">
+    <div class="gs-form reveal">
+      <form onsubmit="handleSubmit(event)">
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" placeholder="Jane Smith" required/>
+          </div>
+
+          <div class="form-field">
+            <label>Company</label>
+            <input type="text" placeholder="Acme Ltd."/>
+          </div>
+
+          <div class="form-field">
+            <label>Your Email <span class="req">*</span></label>
+            <input type="email" placeholder="jane@acme.com" required/>
+          </div>
+
+          <div class="form-field">
+            <label>Notification Emails <span class="req">*</span></label>
+            <input type="text" placeholder="ops@acme.com, cto@acme.com" required/>
+          </div>
+
+          <div class="form-field full">
+            <label>URLs / Endpoints to Monitor <span class="req">*</span></label>
+            <textarea placeholder="https://acme.com&#10;https://api.acme.com/health&#10;https://app.acme.com" required></textarea>
+          </div>
+
+          <div class="form-field">
+            <label>Response Threshold <span class="req">*</span></label>
+            <select required>
+              <option value="" disabled selected>Select threshold</option>
+              <option>Immediate</option>
+              <option>5 minute delay</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Monitoring Frequency <span class="req">*</span></label>
+            <select required>
+              <option value="" disabled selected>Select frequency</option>
+              <option>Every 5 minutes</option>
+              <option>Every 10 minutes</option>
+              <option>Every 15 minutes</option>
+            </select>
+          </div>
+
+          <div class="form-field full">
+            <label>Preferred Check Regions <span class="req">*</span></label>
+            <div class="checkboxes">
+              <label class="checkbox-opt">
+                <input type="checkbox" name="region" value="EU"/>
+                <div class="checkbox-dot"></div>
+                Europe (EU)
+              </label>
+              <label class="checkbox-opt">
+                <input type="checkbox" name="region" value="US"/>
+                <div class="checkbox-dot"></div>
+                United States (US)
+              </label>
+              <label class="checkbox-opt">
+                <input type="checkbox" name="region" value="APAC"/>
+                <div class="checkbox-dot"></div>
+                Asia-Pacific (APAC)
+              </label>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Budget Range <span class="req">*</span></label>
+            <select required>
+              <option value="" disabled selected>Select budget</option>
+              <option>Standard ($499)</option>
+              <option>Custom (20+ endpoints)</option>
+            </select>
+          </div>
+
+          <div class="form-field full">
+            <label>Additional Notes</label>
+            <textarea placeholder="Any specific requirements, SLA needs, or questions…"></textarea>
+          </div>
+
+          <div class="form-field full form-submit">
+            <button type="submit" class="btn-submit">Submit Request</button>
+          </div>
+
+        </div>
+      </form>
+
+      <!-- Success state (hidden) -->
+      <div id="form-success" style="display:none;text-align:center;padding:40px 0">
+        <div style="font-size:2.5rem;margin-bottom:16px">✅</div>
+        <h3 style="font-weight:700;font-size:1.2rem;margin-bottom:8px">Request submitted!</h3>
+        <p style="color:var(--muted);font-size:0.9rem;line-height:1.7">We'll review your details and get back to you within 24 hours with a plan.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="nav-logo" style="margin-bottom:0;cursor:default">
+            <div class="nav-logo-mark">C</div>Cloudx247
+          </div>
+          <p>Professional monitoring setup for startups and SMBs. One-time payment, no contracts.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Pages</h4>
+          <a onclick="showPage('home')">Home</a>
+          <a onclick="showPage('services')">Services</a>
+          <a onclick="showPage('pricing')">Pricing</a>
+          <a onclick="showPage('about')">About</a>
+          <a onclick="showPage('getstarted')">Get Started</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@cloudx247.com">hello@cloudx247.com</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Cloudx247. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════
+     JS
+══════════════════════════════════════ -->
+<script>
+/* ── Router ── */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  // update nav active state
+  document.querySelectorAll('.nav-links a[data-page]').forEach(a=>{
+    a.classList.toggle('active-link', a.dataset.page===id);
+  });
+  window.scrollTo({top:0,behavior:'instant'});
+  // re-trigger reveals on new page
+  setTimeout(()=>initReveal(), 50);
+}
+
+/* ── Mobile menu ── */
+function toggleMenu(){
+  const m = document.getElementById('mob-menu');
+  m.classList.toggle('open');
+}
+
+/* ── Scroll reveal ── */
+function initReveal(){
+  const els = document.querySelectorAll('.page.active .reveal:not(.in)');
+  if(!els.length) return;
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting){
+        setTimeout(()=>e.target.classList.add('in'), i*80);
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(el=>io.observe(el));
+}
+initReveal();
+
+/* ── Form ── */
+function handleSubmit(e){
+  e.preventDefault();
+  const form = e.target;
+  form.style.display='none';
+  document.getElementById('form-success').style.display='block';
+}
+</script>
+</body>
+</html>
