@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $to = "hello@cloudx247.com";
 
-    $subject = "New Monitoring Request - $company";
+    $subject = "New Cloudx247 Monitoring Request";
 
     $message = "
     New Monitoring Request
